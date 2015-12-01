@@ -14,7 +14,7 @@ Installation
 
 Use the `go get` command to fetch `gosaml` and its dependencies into your local `$GOPATH`:
 
-    $ go get github.com/mattbaird/gosaml
+    $ go get github.com/geappliances/gosaml
 
 Usage
 -----
@@ -26,7 +26,7 @@ package main
 
 import (
     "fmt"
-    "github.com/mattbaird/gosaml"
+    "github.com/geappliances/gosaml"
 )
 
 func main() {
@@ -53,7 +53,7 @@ The above code will generate the following AuthnRequest XML:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
-    ID="_fd22bc94-0dee-489f-47d5-b86e3100268c" Version="2.0" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+    ID="_fd22bc94-0dee-489f-47d5-b86e3100268c" Version="2.0" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
     AssertionConsumerServiceURL="http://www.onelogin.net" IssueInstant="2014-09-02T13:15:28" AssertionConsumerServiceIndex="0"
     AttributeConsumingServiceIndex="0">
     <saml:Issuer>https://sp.example.com/SAML2</saml:Issuer>
