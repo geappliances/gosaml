@@ -49,7 +49,7 @@ func (ar AuthorizationRequest) GetRequest(base64Encode bool) (string, error) {
 		SAMLP:                       "urn:oasis:names:tc:SAML:2.0:protocol",
 		SAML:                        "urn:oasis:names:tc:SAML:2.0:assertion",
 		ID:                          ar.Id,
-		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
 		Version:                     "2.0",
 		AssertionConsumerServiceURL: ar.AppSettings.AssertionConsumerServiceURL,
 		Issuer: Issuer{
@@ -112,7 +112,7 @@ func (ar AuthorizationRequest) GetSignedRequest(base64Encode bool, publicCert st
 		SAML:                        "urn:oasis:names:tc:SAML:2.0:assertion",
 		SAMLSIG:                     "http://www.w3.org/2000/09/xmldsig#",
 		ID:                          ar.Id,
-		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
 		Version:                     "2.0",
 		AssertionConsumerServiceURL: ar.AppSettings.AssertionConsumerServiceURL,
 		Issuer: Issuer{
