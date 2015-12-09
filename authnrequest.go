@@ -15,8 +15,11 @@
 package saml
 
 import (
+	"bytes"
+	"compress/flate"
 	"encoding/base64"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"io/ioutil"
@@ -25,6 +28,11 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+)
+
+const (
+	BindingPOST = iota
+	BindingRedirect
 )
 
 func NewAuthorizationRequest(appSettings AppSettings, accountSettings AccountSettings) *AuthorizationRequest {
@@ -41,7 +49,17 @@ func NewAuthorizationRequest(appSettings AppSettings, accountSettings AccountSet
 
 // GetRequest returns a string formatted XML document that represents the SAML document
 // TODO: parameterize more parts of the request
-func (ar AuthorizationRequest) GetRequest(base64Encode bool) (string, error) {
+func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
+	bindings := map[int]string{
+		BindingPOST:     "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Post",
+		BindingRedirect: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
+	}
+
+	bind, ok := bindings[binding]
+	if !ok {
+		return "", errors.New("invalid binding type requested")
+	}
+
 	d := AuthnRequest{
 		XMLName: xml.Name{
 			Local: "samlp:AuthnRequest",
@@ -49,7 +67,7 @@ func (ar AuthorizationRequest) GetRequest(base64Encode bool) (string, error) {
 		SAMLP:                       "urn:oasis:names:tc:SAML:2.0:protocol",
 		SAML:                        "urn:oasis:names:tc:SAML:2.0:assertion",
 		ID:                          ar.Id,
-		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
+		ProtocolBinding:             bind,
 		Version:                     "2.0",
 		AssertionConsumerServiceURL: ar.AppSettings.AssertionConsumerServiceURL,
 		Issuer: Issuer{
@@ -88,13 +106,7 @@ func (ar AuthorizationRequest) GetRequest(base64Encode bool) (string, error) {
 	}
 
 	xmlAuthnRequest := fmt.Sprintf("<?xml version='1.0' encoding='UTF-8'?>\n%s", b)
-
-	if base64Encode {
-		data := []byte(xmlAuthnRequest)
-		return base64.StdEncoding.EncodeToString(data), nil
-	} else {
-		return string(xmlAuthnRequest), nil
-	}
+	return string(xmlAuthnRequest), nil
 }
 
 // GetSignedRequest returns a string formatted XML document that represents the SAML document
@@ -268,13 +280,36 @@ func (ar AuthorizationRequest) GetRequestUrl() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	base64EncodedUTF8SamlRequest, err := ar.GetRequest(true)
+
+	request, err := ar.GetRequest(BindingRedirect)
 	if err != nil {
 		return "", err
 	}
 
+	// Deflate
+	var deflated bytes.Buffer
+
+	fw, err := flate.NewWriter(&deflated, -1)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = fw.Write([]byte(request))
+	if err != nil {
+		return "", err
+	}
+
+	err = fw.Close()
+	if err != nil {
+		return "", err
+	}
+
+	// base64
+	b64str := base64.StdEncoding.EncodeToString(deflated.Bytes())
+
+	// urlencode
 	q := u.Query()
-	q.Add("SAMLRequest", base64EncodedUTF8SamlRequest)
+	q.Add("SAMLRequest", b64str)
 
 	u.RawQuery = q.Encode()
 	return u.String(), nil
