@@ -51,7 +51,7 @@ func NewAuthorizationRequest(appSettings AppSettings, accountSettings AccountSet
 // TODO: parameterize more parts of the request
 func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
 	bindings := map[int]string{
-		BindingPOST:     "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Post",
+		BindingPOST:     "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
 		BindingRedirect: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
 	}
 
@@ -275,13 +275,13 @@ func (ar AuthorizationRequest) GetSignedRequest(base64Encode bool, publicCert st
 
 // String reqString = accSettings.getIdp_sso_target_url()+"?SAMLRequest=" +
 // AuthRequest.getRidOfCRLF(URLEncoder.encode(authReq.getRequest(AuthRequest.base64),"UTF-8"));
-func (ar AuthorizationRequest) GetRequestUrl() (string, error) {
+func (ar AuthorizationRequest) GetRequestUrl(binding int) (string, error) {
 	u, err := url.Parse(ar.AccountSettings.IDP_SSO_Target_URL)
 	if err != nil {
 		return "", err
 	}
 
-	request, err := ar.GetRequest(BindingRedirect)
+	request, err := ar.GetRequest(binding)
 	if err != nil {
 		return "", err
 	}

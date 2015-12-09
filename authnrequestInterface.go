@@ -35,7 +35,7 @@ type AuthnRequest struct {
 	ProtocolBinding                string                `xml:"ProtocolBinding,attr"`
 	AssertionConsumerServiceURL    string                `xml:"AssertionConsumerServiceURL,attr,omitempty"`
 	IssueInstant                   string                `xml:"IssueInstant,attr"`
-	AttributeConsumingServiceIndex int                   `xml:"AttributeConsumingServiceIndex,attr"`
+	AttributeConsumingServiceIndex int                   `xml:"AttributeConsumingServiceIndex,attr,omitemtpy"`
 	AssertionConsumerServiceIndex  int                   `xml:"AssertionConsumerServiceIndex,attr,omitempty"`
 	Issuer                         Issuer                `xml:"Issuer"`
 	NameIDPolicy                   NameIDPolicy          `xml:"NameIDPolicy"`
