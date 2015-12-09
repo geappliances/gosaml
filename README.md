@@ -9,6 +9,8 @@ For instance, New Relic allows you to configure a saml provider (https://newreli
 
 Ping Identity has a nice video for SAML here: https://www.pingidentity.com/resource-center/Introduction-to-SAML-Video.cfm
 
+Shibboleth provides a test SAML IdP and SP endpoint at https://www.testshib.org/
+
 Installation
 ------------
 
