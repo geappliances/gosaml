@@ -34,7 +34,7 @@ func NewAuthorizationRequest(appSettings AppSettings, accountSettings AccountSet
 	}
 	//yyyy-MM-dd'T'H:mm:ss
 	layout := "2006-01-02T15:04:05"
-	t := time.Now().Format(layout)
+	t := time.Now().UTC().Format(layout)
 
 	return &AuthorizationRequest{AccountSettings: accountSettings, AppSettings: appSettings, Id: "_" + myIdUUID.String(), IssueInstant: t}
 }
@@ -72,13 +72,14 @@ func (ar AuthorizationRequest) GetRequest(base64Encode bool) (string, error) {
 			},
 			SAMLP:      "urn:oasis:names:tc:SAML:2.0:protocol",
 			Comparison: "exact",
-		},
-		AuthnContextClassRef: AuthnContextClassRef{
-			XMLName: xml.Name{
-				Local: "saml:AuthnContextClassRef",
+
+			AuthnContextClassRef: AuthnContextClassRef{
+				XMLName: xml.Name{
+					Local: "saml:AuthnContextClassRef",
+				},
+				SAML:      "urn:oasis:names:tc:SAML:2.0:assertion",
+				Transport: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
 			},
-			SAML:      "urn:oasis:names:tc:SAML:2.0:assertion",
-			Transport: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
 		},
 	}
 	b, err := xml.MarshalIndent(d, "", "    ")
