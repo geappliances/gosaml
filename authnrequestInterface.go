@@ -43,22 +43,10 @@ type AuthnRequest struct {
 }
 
 type AuthnSignedRequest struct {
-	XMLName                        xml.Name
-	SAMLP                          string                `xml:"xmlns:samlp,attr"`
-	SAML                           string                `xml:"xmlns:saml,attr"`
-	SAMLSIG                        string                `xml:"xmlns:samlsig,attr"`
-	ID                             string                `xml:"ID,attr"`
-	Version                        string                `xml:"Version,attr"`
-	ProtocolBinding                string                `xml:"ProtocolBinding,attr"`
-	AssertionConsumerServiceURL    string                `xml:"AssertionConsumerServiceURL,attr"`
-	IssueInstant                   string                `xml:"IssueInstant,attr"`
-	AssertionConsumerServiceIndex  int                   `xml:"AssertionConsumerServiceIndex,attr"`
-	AttributeConsumingServiceIndex int                   `xml:"AttributeConsumingServiceIndex,attr"`
-	Issuer                         Issuer                `xml:"Issuer"`
-	NameIDPolicy                   NameIDPolicy          `xml:"NameIDPolicy"`
-	RequestedAuthnContext          RequestedAuthnContext `xml:"RequestedAuthnContext"`
-	AuthnContextClassRef           AuthnContextClassRef  `xml:"AuthnContextClassRef"`
-	Signature                      Signature             `xml:"Signature"`
+	AuthnRequest
+	AuthnContextClassRef AuthnContextClassRef `xml:"AuthnContextClassRef"`
+	Signature            Signature            `xml:"Signature"`
+	SAMLSIG              string               `xml:"xmlns:samlsig,attr"`
 }
 
 type Issuer struct {

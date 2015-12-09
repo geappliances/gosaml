@@ -47,9 +47,7 @@ func NewAuthorizationRequest(appSettings AppSettings, accountSettings AccountSet
 	return &AuthorizationRequest{AccountSettings: accountSettings, AppSettings: appSettings, Id: "_" + myIdUUID.String(), IssueInstant: t}
 }
 
-// GetRequest returns a string formatted XML document that represents the SAML document
-// TODO: parameterize more parts of the request
-func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
+func (ar AuthorizationRequest) BuildRequest(binding int) (AuthnRequest, error) {
 	bindings := map[int]string{
 		BindingPOST:     "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
 		BindingRedirect: "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
@@ -57,7 +55,7 @@ func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
 
 	bind, ok := bindings[binding]
 	if !ok {
-		return "", errors.New("invalid binding type requested")
+		return AuthnRequest{}, errors.New("invalid binding type requested")
 	}
 
 	d := AuthnRequest{
@@ -100,6 +98,18 @@ func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
 			},
 		},
 	}
+
+	return d, nil
+}
+
+// GetRequest returns a string formatted XML document that represents the SAML document
+// TODO: parameterize more parts of the request
+func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
+	d, err := ar.BuildRequest(binding)
+	if err != nil {
+		return "", err
+	}
+
 	b, err := xml.MarshalIndent(d, "", "    ")
 	if err != nil {
 		return "", err
@@ -111,51 +121,20 @@ func (ar AuthorizationRequest) GetRequest(binding int) (string, error) {
 
 // GetSignedRequest returns a string formatted XML document that represents the SAML document
 // TODO: parameterize more parts of the request
-func (ar AuthorizationRequest) GetSignedRequest(base64Encode bool, publicCert string, privateCert string) (string, error) {
+func (ar AuthorizationRequest) GetSignedRequest(binding int, publicCert string, privateCert string) (string, error) {
 	cert, err := LoadCertificate(publicCert)
 	if err != nil {
 		return "", err
 	}
 
+	base, err := ar.BuildRequest(binding)
+	if err != nil {
+		return "", err
+	}
+
 	d := AuthnSignedRequest{
-		XMLName: xml.Name{
-			Local: "samlp:AuthnRequest",
-		},
-		SAMLP:                       "urn:oasis:names:tc:SAML:2.0:protocol",
-		SAML:                        "urn:oasis:names:tc:SAML:2.0:assertion",
-		SAMLSIG:                     "http://www.w3.org/2000/09/xmldsig#",
-		ID:                          ar.Id,
-		ProtocolBinding:             "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
-		Version:                     "2.0",
-		AssertionConsumerServiceURL: ar.AppSettings.AssertionConsumerServiceURL,
-		Issuer: Issuer{
-			XMLName: xml.Name{
-				Local: "saml:Issuer",
-			},
-			Url: ar.AppSettings.Issuer,
-		},
-		IssueInstant: ar.IssueInstant,
-		NameIDPolicy: NameIDPolicy{
-			XMLName: xml.Name{
-				Local: "samlp:NameIDPolicy",
-			},
-			AllowCreate: true,
-			Format:      "urn:oasis:names:tc:SAML:2.0:nameid-format:transient",
-		},
-		RequestedAuthnContext: RequestedAuthnContext{
-			XMLName: xml.Name{
-				Local: "samlp:RequestedAuthnContext",
-			},
-			SAMLP:      "urn:oasis:names:tc:SAML:2.0:protocol",
-			Comparison: "exact",
-		},
-		AuthnContextClassRef: AuthnContextClassRef{
-			XMLName: xml.Name{
-				Local: "saml:AuthnContextClassRef",
-			},
-			SAML:      "urn:oasis:names:tc:SAML:2.0:assertion",
-			Transport: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
-		},
+		AuthnRequest: base,
+		SAMLSIG:      "http://www.w3.org/2000/09/xmldsig#",
 		Signature: Signature{
 			XMLName: xml.Name{
 				Local: "samlsig:Signature",
@@ -228,7 +207,15 @@ func (ar AuthorizationRequest) GetSignedRequest(base64Encode bool, publicCert st
 				},
 			},
 		},
+		AuthnContextClassRef: AuthnContextClassRef{
+			XMLName: xml.Name{
+				Local: "saml:AuthnContextClassRef",
+			},
+			SAML:      "urn:oasis:names:tc:SAML:2.0:assertion",
+			Transport: "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport",
+		},
 	}
+
 	b, err := xml.MarshalIndent(d, "", "    ")
 	if err != nil {
 		return "", err
@@ -264,13 +251,7 @@ func (ar AuthorizationRequest) GetSignedRequest(base64Encode bool, publicCert st
 		return "", err
 	}
 	samlSignedRequestXml := strings.Trim(string(samlSignedRequest), "\n")
-
-	if base64Encode {
-		data := []byte(samlSignedRequestXml)
-		return base64.StdEncoding.EncodeToString(data), nil
-	} else {
-		return string(samlSignedRequestXml), nil
-	}
+	return string(samlSignedRequestXml), nil
 }
 
 // String reqString = accSettings.getIdp_sso_target_url()+"?SAMLRequest=" +
